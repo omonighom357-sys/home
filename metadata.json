@@ -1,0 +1,8 @@
+{
+  "name": "Home Sweet Home Resort",
+  "description": "A place where luxury feels like home. Contemporary hospitality, luxury suites, and direct reservation requests at Home Sweet Home Resort.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
