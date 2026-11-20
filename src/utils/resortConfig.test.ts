@@ -4,45 +4,47 @@ import {
   filterGalleryPhotos,
   getAvailableGalleryCategories,
   getRoomPhoto,
-  mergeResortConfig,
 } from './resortConfig';
-import { DEFAULT_RESORT_CONFIG, RESORT_PHOTOS } from '../data/resortData';
+import { RESORT_PHOTOS, ROOM_CATEGORIES } from '../data/resortData';
 
-test('getAvailableGalleryCategories excludes categories without genuine photos', () => {
+test('ROOM_CATEGORIES contains exact four official rooms in ascending tier order', () => {
+  assert.equal(ROOM_CATEGORIES.length, 4);
+  assert.deepEqual(
+    ROOM_CATEGORIES.map((r) => ({ id: r.id, name: r.name, nightlyRate: r.nightlyRate })),
+    [
+      { id: 'deluxe', name: 'Deluxe', nightlyRate: 35000 },
+      { id: 'super-deluxe', name: 'Super Deluxe', nightlyRate: 40000 },
+      { id: 'elite', name: 'Elite', nightlyRate: 45000 },
+      { id: 'super-elite', name: 'Super Elite', nightlyRate: 50000 },
+    ]
+  );
+});
+
+test('All four room categories map to unique valid photographs and remove outdated assets', () => {
+  const mappedPhotos = ROOM_CATEGORIES.map((r) => getRoomPhoto(r.id));
+  const uniqueIds = new Set(mappedPhotos.map((p) => p.id));
+  assert.equal(uniqueIds.size, 4);
+
+  for (const photo of RESORT_PHOTOS) {
+    assert.equal(photo.src.includes('hotel-gold-ice-warri'), false);
+  }
+
+  assert.equal(
+    getRoomPhoto('super-elite').src,
+    '/assets/aistudio/inpaint_text_10_54ed33a5.jpg'
+  );
+});
+
+test('getAvailableGalleryCategories returns verified photo categories', () => {
   const categories = getAvailableGalleryCategories(RESORT_PHOTOS);
-  assert.equal(categories.includes('Exterior'), true);
-  assert.equal(categories.includes('Rooms & Suites'), true);
-  assert.equal(categories.includes('Interiors'), true);
-  assert.equal(categories.includes('Facilities'), false);
+  assert.deepEqual(categories, ['Exterior', 'Rooms & Suites', 'Interiors']);
 });
 
 test('filterGalleryPhotos filters by selected category accurately', () => {
   assert.equal(filterGalleryPhotos(RESORT_PHOTOS, 'All').length, RESORT_PHOTOS.length);
+  assert.equal(filterGalleryPhotos(RESORT_PHOTOS, 'Rooms & Suites').length, 4);
+  assert.equal(filterGalleryPhotos(RESORT_PHOTOS, 'Interiors').length, 3);
   const exterior = filterGalleryPhotos(RESORT_PHOTOS, 'Exterior');
   assert.equal(exterior.length, 1);
   assert.equal(exterior[0].id, 'exterior-facade');
-});
-
-test('mergeResortConfig preserves valid editable room mapping and rejects unknown photo ids', () => {
-  const merged = mergeResortConfig({
-    whatsappNumber: '+2348000000000',
-    roomImageMapping: {
-      deluxe: 'room-green-tufted',
-      executive: 'nonexistent-photo-id',
-      presidential: 'room-warm-wardrobe',
-    },
-    amenities: [{ id: 'wifi', confirmed: true, note: 'Guest Wi-Fi confirmed' }],
-  });
-
-  assert.equal(merged.whatsappNumber, '+2348000000000');
-  assert.equal(merged.roomImageMapping.deluxe, 'room-green-tufted');
-  assert.equal(merged.roomImageMapping.executive, DEFAULT_RESORT_CONFIG.roomImageMapping.executive);
-  assert.equal(merged.roomImageMapping.presidential, 'room-warm-wardrobe');
-
-  const wifi = merged.amenities.find((a) => a.id === 'wifi');
-  assert.equal(wifi?.confirmed, true);
-  assert.equal(wifi?.note, 'Guest Wi-Fi confirmed');
-
-  const roomPhoto = getRoomPhoto('deluxe', merged);
-  assert.equal(roomPhoto.id, 'room-green-tufted');
 });

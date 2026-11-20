@@ -176,3 +176,9 @@ export function buildWhatsAppUrl(rawPhone: string, message: string): string | nu
   const encoded = encodeURIComponent(message);
   return `https://wa.me/${digits}?text=${encoded}`;
 }
+
+export function buildWhatsAppShareUrl(rawPhone: string, message: string): string {
+  const direct = buildWhatsAppUrl(rawPhone, message);
+  if (direct) return direct;
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}

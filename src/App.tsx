@@ -1,27 +1,26 @@
-import { useCallback, useEffect, useState } from 'react';
-import { MotionConfig } from 'motion/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MotionConfig, motion, useScroll, useSpring } from 'motion/react';
 import { BookingSection } from './components/BookingSection';
 import { BrandStorySection } from './components/BrandStorySection';
 import { CinematicIntro } from './components/CinematicIntro';
 import { ContactSection } from './components/ContactSection';
-import { ExperiencesSection } from './components/ExperiencesSection';
 import { Footer } from './components/Footer';
 import { GallerySection } from './components/GallerySection';
 import { HeroSection } from './components/HeroSection';
+import { MarqueeStrip } from './components/MarqueeStrip';
 import { Navbar } from './components/Navbar';
-import { PropertyConfigDrawer } from './components/PropertyConfigDrawer';
+import { ReviewsSection } from './components/ReviewsSection';
 import { RoomDetailsModal } from './components/RoomDetailsModal';
 import { RoomsSection } from './components/RoomsSection';
 import { VirtualConcierge } from './components/VirtualConcierge';
-import { AtmosphereMode, ResortConfig, RoomCategory } from './data/resortData';
+import { getResortProfile, RoomCategory } from './data/resortData';
 import {
   addDaysToDateString,
   BookingFormInput,
   getTodayDateString,
 } from './utils/booking';
-import { loadResortConfig, saveResortConfig } from './utils/resortConfig';
 
-const INTRO_SESSION_KEY = 'hsh_intro_seen_v1';
+const INTRO_SESSION_KEY = 'hsh_intro_seen_v3';
 
 function shouldShowIntroInitially(): boolean {
   if (typeof window === 'undefined') return false;
@@ -37,10 +36,15 @@ function shouldShowIntroInitially(): boolean {
 
 export default function App() {
   const [showIntro, setShowIntro] = useState<boolean>(() => shouldShowIntroInitially());
-  const [atmosphere, setAtmosphere] = useState<AtmosphereMode>('daylight');
-  const [config, setConfig] = useState<ResortConfig>(() => loadResortConfig());
   const [selectedRoomModal, setSelectedRoomModal] = useState<RoomCategory | null>(null);
-  const [configDrawerOpen, setConfigDrawerOpen] = useState(false);
+  const profile = useMemo(() => getResortProfile(), []);
+
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 180,
+    damping: 28,
+    restDelta: 0.001,
+  });
 
   const today = getTodayDateString();
   const [bookingForm, setBookingForm] = useState<BookingFormInput>({
@@ -55,13 +59,8 @@ export default function App() {
   });
 
   useEffect(() => {
-    const root = document.documentElement;
-    if (atmosphere === 'evening') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  }, [atmosphere]);
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -80,13 +79,8 @@ export default function App() {
     try {
       window.sessionStorage.setItem(INTRO_SESSION_KEY, '1');
     } catch {
-      // Ignore storage failures gracefully
+      // Ignore storage errors cleanly
     }
-  }, []);
-
-  const handleUpdateConfig = useCallback((nextConfig: ResortConfig) => {
-    setConfig(nextConfig);
-    saveResortConfig(nextConfig);
   }, []);
 
   const scrollToSection = useCallback((id: string) => {
@@ -115,68 +109,61 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-[#F8F5EF] dark:bg-[#181715] text-[#242424] dark:text-[#F8F5EF] transition-colors duration-300">
+      <div className="min-h-screen bg-[#F9F6F0] text-[#000000]">
+        {/* Gold Scroll Progress Indicator */}
+        <motion.div
+          aria-hidden="true"
+          style={{ scaleX: smoothProgress }}
+          className="fixed top-0 inset-x-0 z-50 h-0.5 origin-left bg-[#D4AF37] pointer-events-none"
+        />
+
         {showIntro && <CinematicIntro onComplete={handleIntroComplete} />}
 
         <Navbar
-          atmosphere={atmosphere}
-          onToggleAtmosphere={() =>
-            setAtmosphere((prev) => (prev === 'daylight' ? 'evening' : 'daylight'))
-          }
           onBookNow={() => scrollToSection('booking')}
-          onOpenConfig={() => setConfigDrawerOpen(true)}
+          onNavigateSection={scrollToSection}
         />
 
         <main>
           <HeroSection
-            atmosphere={atmosphere}
-            onSetAtmosphere={setAtmosphere}
             onExploreRooms={() => scrollToSection('rooms')}
-            onBookStay={() => scrollToSection('booking')}
             heroReady={!showIntro}
           />
 
-          <BrandStorySection onExploreGallery={() => scrollToSection('gallery')} />
+          <MarqueeStrip />
 
-          <RoomsSection
-            config={config}
-            onViewDetails={(room) => setSelectedRoomModal(room)}
-            onBookRoom={handleBookRoom}
-            onOpenConfig={() => setConfigDrawerOpen(true)}
+          <BrandStorySection
+            onExploreGallery={() => scrollToSection('gallery')}
+            onExploreRooms={() => scrollToSection('rooms')}
+            onExploreLocation={() => scrollToSection('contact')}
           />
 
-          <BookingSection
-            form={bookingForm}
-            onChangeForm={setBookingForm}
-            config={config}
-            onUpdateWhatsAppNumber={(whatsappNumber) =>
-              handleUpdateConfig({ ...config, whatsappNumber })
-            }
-            onOpenConfig={() => setConfigDrawerOpen(true)}
+          <RoomsSection
+            onViewDetails={(room) => setSelectedRoomModal(room)}
+            onBookRoom={handleBookRoom}
           />
 
           <GallerySection />
 
-          <ExperiencesSection
-            config={config}
-            onOpenConfig={() => setConfigDrawerOpen(true)}
+          <ReviewsSection />
+
+          <BookingSection
+            form={bookingForm}
+            onChangeForm={setBookingForm}
+            profile={profile}
           />
 
-          <ContactSection
-            config={config}
-            onOpenConfig={() => setConfigDrawerOpen(true)}
-          />
+          <ContactSection profile={profile} />
         </main>
 
         <Footer
-          config={config}
-          onOpenConfig={() => setConfigDrawerOpen(true)}
+          profile={profile}
           onReplayIntro={handleReplayIntro}
           onSelectRoomForBooking={handleBookRoom}
         />
 
         <VirtualConcierge
-          config={config}
+          profile={profile}
           onExploreRooms={() => scrollToSection('rooms')}
           onMakeReservation={() => scrollToSection('booking')}
           onContactResort={() => scrollToSection('contact')}
@@ -184,7 +171,6 @@ export default function App() {
 
         <RoomDetailsModal
           room={selectedRoomModal}
-          config={config}
           checkIn={bookingForm.checkIn}
           checkOut={bookingForm.checkOut}
           onDatesChange={(checkIn, checkOut) =>
@@ -192,14 +178,6 @@ export default function App() {
           }
           onClose={() => setSelectedRoomModal(null)}
           onBookRoom={handleBookRoom}
-          onOpenConfig={() => setConfigDrawerOpen(true)}
-        />
-
-        <PropertyConfigDrawer
-          open={configDrawerOpen}
-          config={config}
-          onUpdateConfig={handleUpdateConfig}
-          onClose={() => setConfigDrawerOpen(false)}
         />
       </div>
     </MotionConfig>

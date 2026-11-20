@@ -8,23 +8,29 @@ interface BrandLogoProps {
 export function BrandLogo({ variant = 'header', className = '' }: BrandLogoProps) {
   if (variant === 'intro') {
     return (
-      <img
-        src={RESORT_LOGO_SRC}
-        alt="Home Sweet Home Resort"
-        referrerPolicy="no-referrer"
-        className={`h-24 w-auto object-contain mix-blend-multiply select-none ${className}`}
-      />
+      <div
+        className={`inline-flex items-center justify-center rounded-full bg-[#F9F6F0] px-7 py-5 shadow-[0_0_50px_rgba(201,162,39,0.22)] border border-[#C9A227]/55 ${className}`}
+      >
+        <img
+          src={RESORT_LOGO_SRC}
+          alt="Home Sweet Home Resort"
+          referrerPolicy="no-referrer"
+          className="h-20 sm:h-24 w-auto object-contain select-none"
+        />
+      </div>
     );
   }
 
   if (variant === 'footer') {
     return (
-      <div className={`inline-flex items-center rounded-xl bg-[#F8F5EF] px-3 py-2 shadow-sm border border-[#C5A46D]/25 ${className}`}>
+      <div
+        className={`inline-flex items-center rounded-full bg-[#F9F6F0] px-5 py-2.5 shadow-sm border border-[#C9A227]/45 ${className}`}
+      >
         <img
           src={RESORT_LOGO_SRC}
           alt="Home Sweet Home Resort"
           referrerPolicy="no-referrer"
-          className="h-12 w-auto object-contain mix-blend-multiply select-none"
+          className="h-11 w-auto object-contain select-none"
         />
       </div>
     );
@@ -32,13 +38,13 @@ export function BrandLogo({ variant = 'header', className = '' }: BrandLogoProps
 
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-lg transition-colors duration-300 dark:bg-[#F8F5EF] dark:px-2 dark:py-0.5 dark:border dark:border-[#C5A46D]/30 ${className}`}
+      className={`inline-flex items-center justify-center rounded-full bg-[#F9F6F0] px-3 py-1 border border-[#C9A227]/45 shadow-sm transition-transform duration-200 ${className}`}
     >
       <img
         src={RESORT_LOGO_SRC}
         alt="Home Sweet Home Resort logo"
         referrerPolicy="no-referrer"
-        className="h-9 sm:h-10 w-auto object-contain mix-blend-multiply select-none"
+        className="h-7 sm:h-8 w-auto object-contain select-none"
       />
     </div>
   );

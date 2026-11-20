@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildWhatsAppBookingMessage,
+  buildWhatsAppShareUrl,
   buildWhatsAppUrl,
   calculateNights,
   calculateTotalPrice,
@@ -11,9 +12,10 @@ import {
 import { ROOM_CATEGORIES } from '../data/resortData';
 
 test('formatNaira formats Naira currency cleanly', () => {
-  assert.equal(formatNaira(30000), '₦30,000');
-  assert.equal(formatNaira(120000), '₦120,000');
-  assert.equal(formatNaira(0), '₦0');
+  assert.equal(formatNaira(35000), '₦35,000');
+  assert.equal(formatNaira(40000), '₦40,000');
+  assert.equal(formatNaira(45000), '₦45,000');
+  assert.equal(formatNaira(50000), '₦50,000');
 });
 
 test('calculateNights computes calendar nights and rejects invalid ranges', () => {
@@ -24,10 +26,12 @@ test('calculateNights computes calendar nights and rejects invalid ranges', () =
   assert.equal(calculateNights('2026-02-30', '2026-03-02'), null);
 });
 
-test('calculateTotalPrice multiplies nightly rate without fabricated charges', () => {
+test('calculateTotalPrice multiplies nightly rate across all four official categories', () => {
+  assert.equal(calculateTotalPrice(35000, 2), 70000);
   assert.equal(calculateTotalPrice(40000, 3), 120000);
+  assert.equal(calculateTotalPrice(45000, 2), 90000);
   assert.equal(calculateTotalPrice(50000, 2), 100000);
-  assert.equal(calculateTotalPrice(30000, 0), 0);
+  assert.equal(calculateTotalPrice(35000, 0), 0);
 });
 
 test('validateBookingRequest catches empty name, invalid dates, and bad guest count', () => {
@@ -36,7 +40,7 @@ test('validateBookingRequest catches empty name, invalid dates, and bad guest co
       fullName: 'A',
       phoneNumber: '123',
       email: 'bad-email',
-      roomId: 'executive',
+      roomId: 'elite',
       checkIn: '2026-11-10',
       checkOut: '2026-11-09',
       guests: 0,
@@ -60,7 +64,7 @@ test('validateBookingRequest accepts valid booking input with optional empty ema
       fullName: 'Amaka Okafor',
       phoneNumber: '+234 803 123 4567',
       email: '',
-      roomId: 'executive',
+      roomId: 'super-elite',
       checkIn: '2026-11-20',
       checkOut: '2026-11-23',
       guests: 2,
@@ -74,33 +78,39 @@ test('validateBookingRequest accepts valid booking input with optional empty ema
   assert.deepEqual(result.errors, {});
 });
 
-test('buildWhatsAppBookingMessage formats reservation request honestly without claiming confirmation', () => {
-  const executive = ROOM_CATEGORIES.find((r) => r.id === 'executive')!;
+test('buildWhatsAppBookingMessage formats reservation request cleanly for Elite tier', () => {
+  const elite = ROOM_CATEGORIES.find((r) => r.id === 'elite')!;
   const msg = buildWhatsAppBookingMessage(
     {
       fullName: 'Amaka Okafor',
       phoneNumber: '08031234567',
       email: 'amaka@example.com',
-      roomId: 'executive',
+      roomId: 'elite',
       checkIn: '2026-11-20',
       checkOut: '2026-11-23',
       guests: 2,
       specialRequests: 'Late arrival',
     },
-    executive,
+    elite,
     3,
-    120000
+    135000
   );
 
-  assert.match(msg, /Deluxe Executive Room/);
+  assert.match(msg, /Elite/);
   assert.match(msg, /3 nights/);
-  assert.match(msg, /₦120,000/);
+  assert.match(msg, /₦135,000/);
   assert.match(msg, /awaiting confirmation/i);
 });
 
-test('buildWhatsAppUrl requires a configured number and encodes message', () => {
+test('buildWhatsAppUrl and buildWhatsAppShareUrl encode WhatsApp booking payloads', () => {
   assert.equal(buildWhatsAppUrl('', 'Hello'), null);
   assert.equal(buildWhatsAppUrl('123', 'Hello'), null);
-  const url = buildWhatsAppUrl('+234 803 000 1111', 'Booking Request');
-  assert.equal(url, 'https://wa.me/2348030001111?text=Booking%20Request');
+  assert.equal(
+    buildWhatsAppUrl('+234 803 000 1111', 'Booking Request'),
+    'https://wa.me/2348030001111?text=Booking%20Request'
+  );
+  assert.equal(
+    buildWhatsAppShareUrl('', 'Booking Request'),
+    'https://wa.me/?text=Booking%20Request'
+  );
 });

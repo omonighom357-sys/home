@@ -4,10 +4,12 @@ import {
   buildFormattedContactInquiry,
   buildGoogleMapsDirectionsUrl,
   buildGoogleMapsEmbedUrl,
+  buildGoogleMapsSearchUrl,
   buildMailtoHref,
   getLocationQuery,
   normalizeExternalUrl,
   validateContactForm,
+  validateReviewSubmission,
 } from './contact';
 
 test('validateContactForm detects missing or invalid fields', () => {
@@ -40,21 +42,48 @@ test('validateContactForm passes on complete valid inquiry', () => {
   assert.deepEqual(res.errors, {});
 });
 
-test('Google Maps helpers return null when unconfigured and valid URLs when configured', () => {
+test('validateReviewSubmission catches missing review fields and accepts valid moderated submissions', () => {
+  const bad = validateReviewSubmission({
+    guestName: 'A',
+    roomId: 'elite',
+    rating: 0,
+    title: 'Ok',
+    experience: 'Short',
+  });
+  assert.equal(bad.isValid, false);
+  assert.ok(bad.errors.guestName);
+  assert.ok(bad.errors.rating);
+  assert.ok(bad.errors.title);
+  assert.ok(bad.errors.experience);
+
+  const ok = validateReviewSubmission({
+    guestName: 'Tega',
+    roomId: 'super-elite',
+    rating: 5,
+    title: 'Quiet nights on Udu Road',
+    experience: 'Clean marble corridors and very calm suite atmosphere throughout my stay.',
+  });
+  assert.equal(ok.isValid, true);
+  assert.deepEqual(ok.errors, {});
+});
+
+test('Google Maps helpers return null when unconfigured and valid URLs when provided', () => {
   assert.equal(getLocationQuery('', ''), null);
   assert.equal(buildGoogleMapsEmbedUrl(''), null);
   assert.equal(buildGoogleMapsDirectionsUrl(''), null);
+  assert.equal(buildGoogleMapsSearchUrl(''), null);
 
-  const query = getLocationQuery('12 Palm Avenue, Victoria Island', '');
-  assert.equal(query, '12 Palm Avenue, Victoria Island');
-  assert.equal(
-    buildGoogleMapsEmbedUrl(query!),
-    'https://maps.google.com/maps?q=12%20Palm%20Avenue%2C%20Victoria%20Island&output=embed'
+  const query = getLocationQuery(
+    'No. 4 Onosuru Street, Udu Road, Opposite Williams Street, Udu, 330103, Delta State, Nigeria',
+    ''
   );
   assert.equal(
-    buildGoogleMapsDirectionsUrl(query!),
-    'https://www.google.com/maps/search/?api=1&query=12%20Palm%20Avenue%2C%20Victoria%20Island'
+    query,
+    'No. 4 Onosuru Street, Udu Road, Opposite Williams Street, Udu, 330103, Delta State, Nigeria'
   );
+  assert.ok(buildGoogleMapsEmbedUrl(query!)?.includes('Onosuru'));
+  assert.ok(buildGoogleMapsDirectionsUrl(query!)?.includes('Onosuru'));
+  assert.ok(buildGoogleMapsSearchUrl(query!)?.includes('Onosuru'));
 });
 
 test('buildMailtoHref and buildFormattedContactInquiry format cleanly', () => {

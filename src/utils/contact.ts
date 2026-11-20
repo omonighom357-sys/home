@@ -1,4 +1,5 @@
 import { sanitizePhoneDigits } from './booking';
+import { RoomCategoryId } from '../data/resortData';
 
 export interface ContactFormInput {
   fullName: string;
@@ -19,6 +20,26 @@ export interface ContactFieldErrors {
 export interface ContactValidationResult {
   isValid: boolean;
   errors: ContactFieldErrors;
+}
+
+export interface ReviewSubmissionInput {
+  guestName: string;
+  roomId: RoomCategoryId;
+  rating: number;
+  title: string;
+  experience: string;
+}
+
+export interface ReviewSubmissionErrors {
+  guestName?: string;
+  rating?: string;
+  title?: string;
+  experience?: string;
+}
+
+export interface ReviewValidationResult {
+  isValid: boolean;
+  errors: ReviewSubmissionErrors;
 }
 
 export function validateContactForm(input: ContactFormInput): ContactValidationResult {
@@ -52,6 +73,31 @@ export function validateContactForm(input: ContactFormInput): ContactValidationR
   };
 }
 
+export function validateReviewSubmission(input: ReviewSubmissionInput): ReviewValidationResult {
+  const errors: ReviewSubmissionErrors = {};
+
+  if (!input.guestName.trim() || input.guestName.trim().length < 2) {
+    errors.guestName = 'Please share your first name or display name (at least 2 characters).';
+  }
+
+  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+    errors.rating = 'Please select a star rating between 1 and 5.';
+  }
+
+  if (!input.title.trim() || input.title.trim().length < 3) {
+    errors.title = 'Please add a short headline for your stay experience.';
+  }
+
+  if (!input.experience.trim() || input.experience.trim().length < 15) {
+    errors.experience = 'Please share at least 15 characters describing your stay.';
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+}
+
 export function getLocationQuery(resortAddress: string, googleMapsQuery: string): string | null {
   const preferred = googleMapsQuery.trim() || resortAddress.trim();
   return preferred.length > 0 ? preferred : null;
@@ -64,6 +110,12 @@ export function buildGoogleMapsEmbedUrl(locationQuery: string): string | null {
 }
 
 export function buildGoogleMapsDirectionsUrl(locationQuery: string): string | null {
+  const trimmed = locationQuery.trim();
+  if (!trimmed) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(trimmed)}`;
+}
+
+export function buildGoogleMapsSearchUrl(locationQuery: string): string | null {
   const trimmed = locationQuery.trim();
   if (!trimmed) return null;
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmed)}`;

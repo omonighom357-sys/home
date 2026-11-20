@@ -1,32 +1,29 @@
 import { useState } from 'react';
 import {
   AlertCircle,
+  ArrowRight,
   Check,
   Copy,
   ExternalLink,
   Mail,
   MapPin,
-  MessageCircle,
   Phone,
-  SlidersHorizontal,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { ResortConfig } from '../data/resortData';
-import { buildWhatsAppUrl } from '../utils/booking';
+import { RESORT_LOCATION, RESORT_NAME, ResortProfile } from '../data/resortData';
 import {
   buildFormattedContactInquiry,
   buildGoogleMapsDirectionsUrl,
   buildGoogleMapsEmbedUrl,
+  buildGoogleMapsSearchUrl,
   buildMailtoHref,
   ContactFormInput,
   getLocationQuery,
-  normalizeExternalUrl,
   validateContactForm,
 } from '../utils/contact';
 
 interface ContactSectionProps {
-  config: ResortConfig;
-  onOpenConfig: () => void;
+  profile: ResortProfile;
 }
 
 const INITIAL_CONTACT_FORM: ContactFormInput = {
@@ -37,7 +34,7 @@ const INITIAL_CONTACT_FORM: ContactFormInput = {
   message: '',
 };
 
-export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
+export function ContactSection({ profile }: ContactSectionProps) {
   const [form, setForm] = useState<ContactFormInput>(INITIAL_CONTACT_FORM);
   const [submittedAttempt, setSubmittedAttempt] = useState(false);
   const [isPreparing, setIsPreparing] = useState(false);
@@ -45,16 +42,12 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
   const [copiedInquiry, setCopiedInquiry] = useState(false);
 
   const validation = validateContactForm(form);
-  const locationQuery = getLocationQuery(config.resortAddress, config.googleMapsQuery);
-  const mapEmbedUrl = locationQuery ? buildGoogleMapsEmbedUrl(locationQuery) : null;
-  const directionsUrl = locationQuery ? buildGoogleMapsDirectionsUrl(locationQuery) : null;
-
-  const configuredSocials = [
-    { label: 'Instagram', url: normalizeExternalUrl(config.socialLinks.instagram) },
-    { label: 'Facebook', url: normalizeExternalUrl(config.socialLinks.facebook) },
-    { label: 'X', url: normalizeExternalUrl(config.socialLinks.x) },
-    { label: 'TikTok', url: normalizeExternalUrl(config.socialLinks.tiktok) },
-  ].filter((item): item is { label: string; url: string } => item.url !== null);
+  const locationQuery =
+    getLocationQuery(profile.resortAddress, profile.googleMapsQuery) ||
+    RESORT_LOCATION.geocodeQuery;
+  const mapEmbedUrl = buildGoogleMapsEmbedUrl(locationQuery);
+  const directionsUrl = buildGoogleMapsDirectionsUrl(locationQuery);
+  const mapsSearchUrl = buildGoogleMapsSearchUrl(locationQuery);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +62,7 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
     window.setTimeout(() => {
       setIsPreparing(false);
       setPreparedInquiry(buildFormattedContactInquiry(form));
-    }, 280);
+    }, 220);
   };
 
   const handleCopyInquiry = async () => {
@@ -79,56 +72,43 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
       setCopiedInquiry(true);
       window.setTimeout(() => setCopiedInquiry(false), 2500);
     } catch {
-      // Clipboard blocked in restricted context; text stays selectable
+      // Clipboard blocked in restricted context; summary stays visible & selectable
     }
   };
 
-  const mailtoHref = preparedInquiry ? buildMailtoHref(config.contactEmail, form) : null;
-  const whatsappHref = preparedInquiry
-    ? buildWhatsAppUrl(config.whatsappNumber, preparedInquiry)
-    : null;
+  const mailtoHref = preparedInquiry ? buildMailtoHref(profile.contactEmail, form) : null;
 
   return (
     <section
       id="contact"
       aria-labelledby="contact-heading"
-      className="scroll-mt-20 py-20 sm:py-28 bg-[#FFFFFF] dark:bg-[#242424] border-t border-[#242424]/8 dark:border-[#F8F5EF]/10 transition-colors duration-300"
+      className="scroll-mt-20 py-20 sm:py-28 lg:py-32 bg-[#FFFFFF] text-[#000000] border-t border-[#C9A227]/25"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-4 mb-4">
-              <span className="h-px w-10 bg-[#C5A46D]" aria-hidden="true" />
-              <span className="text-xs font-semibold tracking-[0.24em] uppercase text-[#A4834C] dark:text-[#C5A46D]">
-                Location &amp; Inquiries
-              </span>
-            </div>
-
-            <h2
-              id="contact-heading"
-              className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-[#242424] dark:text-[#F8F5EF]"
-            >
-              Contact &amp; Directions
-            </h2>
-
-            <p className="mt-4 text-base text-[#242424]/75 dark:text-[#F8F5EF]/75 leading-relaxed">
-              Reach our hospitality team directly or configure verified resort coordinates and
-              contact channels in Property Setup.
-            </p>
+        <div className="max-w-2xl mb-12 sm:mb-14">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="h-px w-10 bg-[#C9A227]" aria-hidden="true" />
+            <span className="font-sans text-xs font-semibold tracking-[0.26em] uppercase text-[#C9A227]">
+              — Location &amp; Arrival
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={onOpenConfig}
-            className="inline-flex items-center gap-2 self-start md:self-auto rounded-md border border-[#242424]/15 dark:border-[#F8F5EF]/15 px-4 py-2.5 text-xs font-medium text-[#242424]/80 dark:text-[#F8F5EF]/80 hover:border-[#C5A46D] hover:text-[#242424] dark:hover:text-[#F8F5EF] transition-colors whitespace-nowrap shrink-0"
+          <h2
+            id="contact-heading"
+            className="font-serif text-4xl sm:text-5xl font-medium tracking-tight text-[#000000]"
           >
-            <SlidersHorizontal className="h-3.5 w-3.5 text-[#C5A46D]" />
-            <span>Configure Contact &amp; Map</span>
-          </button>
+            Find &amp; Reach{' '}
+            <span className="font-editorial italic text-[#C9A227]">Our Resort</span>
+          </h2>
+
+          <p className="mt-4 text-sm sm:text-base text-[#000000]/75 leading-relaxed">
+            Explore our exact location in {RESORT_LOCATION.lga}, inspect arrival directions, or send
+            an on-site inquiry directly to our guest hospitality desk.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-          {/* Left: Configured Details + Google Map */}
+          {/* Left 5 Cols: Interactive Embedded Map + Verified Official Address */}
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -136,139 +116,121 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-5 flex flex-col gap-6"
           >
-            <div className="rounded-2xl bg-[#F8F5EF] dark:bg-[#181715] border border-[#242424]/10 dark:border-[#F8F5EF]/10 p-6 sm:p-8 space-y-5">
-              <h3 className="font-serif text-2xl font-medium text-[#242424] dark:text-[#F8F5EF]">
-                Resort Desk Directory
-              </h3>
-
-              <dl className="space-y-4 text-sm">
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-[#C5A46D] mt-1 shrink-0" />
-                  <div>
-                    <dt className="text-xs font-semibold tracking-wider uppercase text-[#242424]/60 dark:text-[#F8F5EF]/60">
-                      Hotel Address
-                    </dt>
-                    <dd className="mt-0.5 text-[#242424] dark:text-[#F8F5EF]">
-                      {config.resortAddress.trim() || 'Awaiting verified resort address'}
-                    </dd>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone className="h-4 w-4 text-[#C5A46D] mt-1 shrink-0" />
-                  <div>
-                    <dt className="text-xs font-semibold tracking-wider uppercase text-[#242424]/60 dark:text-[#F8F5EF]/60">
-                      Official Phone
-                    </dt>
-                    <dd className="mt-0.5 text-[#242424] dark:text-[#F8F5EF] tabular-nums">
-                      {config.contactPhone.trim() || 'Awaiting verified phone number'}
-                    </dd>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <MessageCircle className="h-4 w-4 text-[#C5A46D] mt-1 shrink-0" />
-                  <div>
-                    <dt className="text-xs font-semibold tracking-wider uppercase text-[#242424]/60 dark:text-[#F8F5EF]/60">
-                      WhatsApp Desk
-                    </dt>
-                    <dd className="mt-0.5 text-[#242424] dark:text-[#F8F5EF] tabular-nums">
-                      {config.whatsappNumber.trim() || 'Awaiting verified WhatsApp number'}
-                    </dd>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Mail className="h-4 w-4 text-[#C5A46D] mt-1 shrink-0" />
-                  <div>
-                    <dt className="text-xs font-semibold tracking-wider uppercase text-[#242424]/60 dark:text-[#F8F5EF]/60">
-                      Email Address
-                    </dt>
-                    <dd className="mt-0.5 text-[#242424] dark:text-[#F8F5EF]">
-                      {config.contactEmail.trim() || 'Awaiting verified reservations email'}
-                    </dd>
-                  </div>
-                </div>
-              </dl>
-
-              {configuredSocials.length > 0 && (
-                <div className="pt-4 border-t border-[#242424]/10 dark:border-[#F8F5EF]/10">
-                  <p className="text-xs font-semibold tracking-wider uppercase text-[#242424]/60 dark:text-[#F8F5EF]/60 mb-2.5">
-                    Social Channels
+            <div className="rounded-2xl bg-[#F9F6F0] border border-[#C9A227]/35 overflow-hidden shadow-sm">
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#000000]/10">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <MapPin className="h-4 w-4 text-[#C9A227] shrink-0" />
+                  <p className="font-serif text-base font-medium text-[#000000] truncate">
+                    {RESORT_LOCATION.propertyName}
                   </p>
-                  <div className="flex flex-wrap gap-4">
-                    {configuredSocials.map((social) => (
-                      <a
-                        key={social.label}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#A4834C] dark:text-[#C5A46D] hover:underline"
-                      >
-                        <span>{social.label}</span>
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ))}
-                  </div>
+                </div>
+                {mapsSearchUrl && (
+                  <a
+                    href={mapsSearchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#C9A227] hover:underline whitespace-nowrap shrink-0"
+                  >
+                    <span>Expand Map</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+
+              {mapEmbedUrl && (
+                <div className="aspect-[16/11] w-full bg-[#F9F6F0]">
+                  <iframe
+                    title="Home Sweet Home Resort Udu Location Map"
+                    src={mapEmbedUrl}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="h-full w-full border-0"
+                  />
                 </div>
               )}
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#C9A227]">
+                    Verified Property Address
+                  </p>
+                  <address className="not-italic mt-1.5 text-sm leading-relaxed text-[#000000]">
+                    <span className="font-semibold block">{RESORT_LOCATION.propertyName}</span>
+                    {RESORT_LOCATION.streetLine} {RESORT_LOCATION.roadLine}
+                    <br />
+                    {RESORT_LOCATION.landmarkLine} {RESORT_LOCATION.cityPostalLine}
+                    <br />
+                    {RESORT_LOCATION.stateCountryLine}
+                  </address>
+                  <p className="mt-2.5 border-l-2 border-[#C9A227] pl-3 text-xs font-semibold tracking-[0.14em] uppercase text-[#000000]/85">
+                    {RESORT_LOCATION.lga}
+                  </p>
+                </div>
+
+                {directionsUrl && (
+                  <a
+                    href={directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#C9A227] hover:bg-[#D4AF37] px-6 py-3 text-xs font-semibold tracking-[0.16em] uppercase text-[#000000] transition-all"
+                  >
+                    <span>Get Directions</span>
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                  </a>
+                )}
+              </div>
             </div>
 
-            {/* Google Map & Get Directions */}
-            <div className="rounded-2xl bg-[#F8F5EF] dark:bg-[#181715] border border-[#242424]/10 dark:border-[#F8F5EF]/10 overflow-hidden">
-              {mapEmbedUrl && directionsUrl ? (
-                <div>
-                  <div className="aspect-[16/10] w-full bg-[#E8D9BD]/40">
-                    <iframe
-                      title="Home Sweet Home Resort Google Map"
-                      src={mapEmbedUrl}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      className="h-full w-full border-0"
-                    />
-                  </div>
-                  <div className="p-4 flex items-center justify-between gap-4">
-                    <p className="text-xs text-[#242424]/75 dark:text-[#F8F5EF]/75 truncate">
-                      {locationQuery}
-                    </p>
-                    <a
-                      href={directionsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-md bg-[#242424] dark:bg-[#C5A46D] px-3.5 py-2 text-xs font-semibold text-[#F8F5EF] dark:text-[#181715] hover:opacity-90 transition-opacity whitespace-nowrap shrink-0"
-                    >
-                      <span>Get Directions</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+            {/* Hospitality Desk Card */}
+            <div className="rounded-2xl bg-[#000000] text-[#F9F6F0] border border-[#C9A227]/35 p-6 sm:p-7 space-y-4">
+              <h3 className="font-serif text-2xl font-medium text-[#FFFFFF]">
+                Direct Hospitality Desk
+              </h3>
+
+              <p className="text-xs sm:text-sm leading-relaxed text-[#F9F6F0]/75">
+                Our guest desk provides prompt guidance on room categories across Deluxe, Super
+                Deluxe, Elite, and Super Elite stays as well as directions along Udu Road.
+              </p>
+
+              <dl className="space-y-3 pt-3 border-t border-[#F9F6F0]/15 text-sm">
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-[#C9A227] mt-1 shrink-0" />
+                  <div>
+                    <dt className="text-[11px] font-semibold tracking-wider uppercase text-[#C9A227]">
+                      Address
+                    </dt>
+                    <dd className="text-[#F9F6F0]/90">{profile.resortAddress}</dd>
                   </div>
                 </div>
-              ) : (
-                <div className="p-6 sm:p-7">
-                  <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#84917A] mb-2">
-                    Map Ready
-                  </p>
-                  <h3 className="font-serif text-xl font-medium text-[#242424] dark:text-[#F8F5EF] mb-2">
-                    Interactive Google Map Awaits Verified Address
-                  </h3>
-                  <p className="text-xs sm:text-sm leading-relaxed text-[#242424]/70 dark:text-[#F8F5EF]/70 mb-4">
-                    To avoid displaying unverified coordinates, the live map and Get Directions
-                    button activate automatically as soon as the resort&apos;s verified address is
-                    entered in Property Setup.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={onOpenConfig}
-                    className="inline-flex items-center gap-2 rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 px-4 py-2 text-xs font-semibold text-[#242424] dark:text-[#F8F5EF] hover:border-[#C5A46D] transition-colors"
-                  >
-                    <MapPin className="h-3.5 w-3.5 text-[#C5A46D]" />
-                    <span>Enter Verified Address</span>
-                  </button>
-                </div>
-              )}
+
+                {profile.contactPhone && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-4 w-4 text-[#C9A227] mt-1 shrink-0" />
+                    <div>
+                      <dt className="text-[11px] font-semibold tracking-wider uppercase text-[#C9A227]">
+                        Telephone
+                      </dt>
+                      <dd className="text-[#F9F6F0]/90 tabular-nums">{profile.contactPhone}</dd>
+                    </div>
+                  </div>
+                )}
+
+                {profile.contactEmail && (
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-4 w-4 text-[#C9A227] mt-1 shrink-0" />
+                    <div>
+                      <dt className="text-[11px] font-semibold tracking-wider uppercase text-[#C9A227]">
+                        Email
+                      </dt>
+                      <dd className="text-[#F9F6F0]/90">{profile.contactEmail}</dd>
+                    </div>
+                  </div>
+                )}
+              </dl>
             </div>
           </motion.div>
 
-          {/* Right: Validated Contact Inquiry Form */}
+          {/* Right 7 Cols: Validated Direct Inquiry Form */}
           <motion.form
             initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -276,22 +238,26 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
             transition={{ duration: 0.65, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
             onSubmit={handleSubmit}
             noValidate
-            className="lg:col-span-7 rounded-2xl bg-[#F8F5EF] dark:bg-[#181715] border border-[#242424]/10 dark:border-[#F8F5EF]/10 p-6 sm:p-8"
+            className="lg:col-span-7 rounded-2xl bg-[#F9F6F0] border border-[#C9A227]/35 p-6 sm:p-8"
           >
-            <h3 className="font-serif text-2xl font-medium text-[#242424] dark:text-[#F8F5EF] mb-2">
+            <p className="text-[11px] font-semibold tracking-[0.24em] uppercase text-[#C9A227] mb-2">
+              Guest Assistance
+            </p>
+            <h3 className="font-serif text-2xl sm:text-3xl font-medium text-[#000000] mb-2">
               Send an Inquiry
             </h3>
-            <p className="text-sm text-[#242424]/70 dark:text-[#F8F5EF]/70 mb-6">
-              Complete the form below to prepare a verified guest inquiry for our hospitality desk.
+            <p className="text-sm text-[#000000]/70 mb-6">
+              Complete the form below to compose a structured direct inquiry for room stays,
+              arrival timing, or group reservations.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label
                   htmlFor="contact-fullname"
-                  className="block text-xs font-semibold tracking-wider uppercase text-[#242424]/80 dark:text-[#F8F5EF]/80 mb-2"
+                  className="block text-xs font-semibold tracking-wider uppercase text-[#000000]/80 mb-2"
                 >
-                  Full Name <span className="text-[#A4834C]">*</span>
+                  Full Name <span className="text-[#C9A227]">*</span>
                 </label>
                 <input
                   id="contact-fullname"
@@ -301,10 +267,10 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
                   value={form.fullName}
                   onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))}
                   aria-invalid={Boolean(submittedAttempt && validation.errors.fullName)}
-                  className="w-full rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 bg-[#FFFFFF] dark:bg-[#242424] px-4 py-3 text-sm text-[#242424] dark:text-[#F8F5EF] placeholder:text-[#242424]/40 dark:placeholder:text-[#F8F5EF]/40 focus:border-[#C5A46D] focus:outline-none"
+                  className="w-full rounded-md border border-[#000000]/20 bg-[#FFFFFF] px-4 py-3 text-sm text-[#000000] placeholder:text-[#000000]/40 focus:border-[#C9A227] focus:outline-none"
                 />
                 {submittedAttempt && validation.errors.fullName && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300">
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     <span>{validation.errors.fullName}</span>
                   </p>
@@ -314,9 +280,9 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
               <div>
                 <label
                   htmlFor="contact-email"
-                  className="block text-xs font-semibold tracking-wider uppercase text-[#242424]/80 dark:text-[#F8F5EF]/80 mb-2"
+                  className="block text-xs font-semibold tracking-wider uppercase text-[#000000]/80 mb-2"
                 >
-                  Email Address <span className="text-[#A4834C]">*</span>
+                  Email Address <span className="text-[#C9A227]">*</span>
                 </label>
                 <input
                   id="contact-email"
@@ -326,10 +292,10 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
                   aria-invalid={Boolean(submittedAttempt && validation.errors.email)}
-                  className="w-full rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 bg-[#FFFFFF] dark:bg-[#242424] px-4 py-3 text-sm text-[#242424] dark:text-[#F8F5EF] placeholder:text-[#242424]/40 dark:placeholder:text-[#F8F5EF]/40 focus:border-[#C5A46D] focus:outline-none"
+                  className="w-full rounded-md border border-[#000000]/20 bg-[#FFFFFF] px-4 py-3 text-sm text-[#000000] placeholder:text-[#000000]/40 focus:border-[#C9A227] focus:outline-none"
                 />
                 {submittedAttempt && validation.errors.email && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300">
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     <span>{validation.errors.email}</span>
                   </p>
@@ -339,9 +305,9 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
               <div>
                 <label
                   htmlFor="contact-phone"
-                  className="block text-xs font-semibold tracking-wider uppercase text-[#242424]/80 dark:text-[#F8F5EF]/80 mb-2"
+                  className="block text-xs font-semibold tracking-wider uppercase text-[#000000]/80 mb-2"
                 >
-                  Phone Number <span className="text-[#A4834C]">*</span>
+                  Phone Number <span className="text-[#C9A227]">*</span>
                 </label>
                 <input
                   id="contact-phone"
@@ -351,10 +317,10 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
                   value={form.phoneNumber}
                   onChange={(e) => setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))}
                   aria-invalid={Boolean(submittedAttempt && validation.errors.phoneNumber)}
-                  className="w-full rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 bg-[#FFFFFF] dark:bg-[#242424] px-4 py-3 text-sm text-[#242424] dark:text-[#F8F5EF] placeholder:text-[#242424]/40 dark:placeholder:text-[#F8F5EF]/40 focus:border-[#C5A46D] focus:outline-none"
+                  className="w-full rounded-md border border-[#000000]/20 bg-[#FFFFFF] px-4 py-3 text-sm text-[#000000] placeholder:text-[#000000]/40 focus:border-[#C9A227] focus:outline-none"
                 />
                 {submittedAttempt && validation.errors.phoneNumber && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300">
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     <span>{validation.errors.phoneNumber}</span>
                   </p>
@@ -364,22 +330,22 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
               <div>
                 <label
                   htmlFor="contact-subject"
-                  className="block text-xs font-semibold tracking-wider uppercase text-[#242424]/80 dark:text-[#F8F5EF]/80 mb-2"
+                  className="block text-xs font-semibold tracking-wider uppercase text-[#000000]/80 mb-2"
                 >
-                  Subject <span className="text-[#A4834C]">*</span>
+                  Subject <span className="text-[#C9A227]">*</span>
                 </label>
                 <input
                   id="contact-subject"
                   type="text"
                   required
-                  placeholder="Stay inquiry, group request, or question"
+                  placeholder="Stay inquiry, group request, or arrival question"
                   value={form.subject}
                   onChange={(e) => setForm((prev) => ({ ...prev, subject: e.target.value }))}
                   aria-invalid={Boolean(submittedAttempt && validation.errors.subject)}
-                  className="w-full rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 bg-[#FFFFFF] dark:bg-[#242424] px-4 py-3 text-sm text-[#242424] dark:text-[#F8F5EF] placeholder:text-[#242424]/40 dark:placeholder:text-[#F8F5EF]/40 focus:border-[#C5A46D] focus:outline-none"
+                  className="w-full rounded-md border border-[#000000]/20 bg-[#FFFFFF] px-4 py-3 text-sm text-[#000000] placeholder:text-[#000000]/40 focus:border-[#C9A227] focus:outline-none"
                 />
                 {submittedAttempt && validation.errors.subject && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300">
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     <span>{validation.errors.subject}</span>
                   </p>
@@ -389,9 +355,9 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
               <div className="sm:col-span-2">
                 <label
                   htmlFor="contact-message"
-                  className="block text-xs font-semibold tracking-wider uppercase text-[#242424]/80 dark:text-[#F8F5EF]/80 mb-2"
+                  className="block text-xs font-semibold tracking-wider uppercase text-[#000000]/80 mb-2"
                 >
-                  Message <span className="text-[#A4834C]">*</span>
+                  Message <span className="text-[#C9A227]">*</span>
                 </label>
                 <textarea
                   id="contact-message"
@@ -401,10 +367,10 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
                   value={form.message}
                   onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
                   aria-invalid={Boolean(submittedAttempt && validation.errors.message)}
-                  className="w-full rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 bg-[#FFFFFF] dark:bg-[#242424] px-4 py-3 text-sm text-[#242424] dark:text-[#F8F5EF] placeholder:text-[#242424]/40 dark:placeholder:text-[#F8F5EF]/40 focus:border-[#C5A46D] focus:outline-none"
+                  className="w-full rounded-md border border-[#000000]/20 bg-[#FFFFFF] px-4 py-3 text-sm text-[#000000] placeholder:text-[#000000]/40 focus:border-[#C9A227] focus:outline-none"
                 />
                 {submittedAttempt && validation.errors.message && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700 dark:text-red-300">
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-red-700">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                     <span>{validation.errors.message}</span>
                   </p>
@@ -416,27 +382,23 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
               <button
                 type="submit"
                 disabled={isPreparing}
-                className="inline-flex items-center justify-center rounded-md bg-[#242424] dark:bg-[#C5A46D] px-6 py-3.5 text-xs sm:text-sm font-semibold tracking-wide text-[#F8F5EF] dark:text-[#181715] hover:bg-[#3a3834] dark:hover:bg-[#d4b680] active:scale-[0.98] disabled:opacity-60 transition-all"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#C9A227] hover:bg-[#D4AF37] px-7 py-3.5 text-xs sm:text-sm font-semibold tracking-[0.16em] uppercase text-[#000000] disabled:opacity-60 transition-all"
               >
-                {isPreparing ? 'Preparing Inquiry...' : 'Prepare Inquiry'}
+                <span>{isPreparing ? 'Preparing Inquiry...' : 'Prepare Inquiry'}</span>
+                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
               </button>
             </div>
 
             {preparedInquiry && (
               <div
                 role="status"
-                className="mt-6 rounded-xl border border-[#C5A46D]/45 bg-[#FFFFFF] dark:bg-[#242424] p-5 space-y-3"
+                className="mt-6 rounded-xl border border-[#C9A227] bg-[#FFFFFF] p-5 space-y-3"
               >
-                <p className="text-xs font-semibold tracking-wider uppercase text-[#A4834C] dark:text-[#C5A46D]">
-                  Inquiry Ready — Manual Send Required
-                </p>
-                <p className="text-xs leading-relaxed text-[#242424]/75 dark:text-[#F8F5EF]/75">
-                  No automated email server is connected to this site, so your message has not been
-                  transmitted automatically. Use one of the verified channels below or copy your
-                  formatted inquiry:
+                <p className="text-xs font-semibold tracking-wider uppercase text-[#C9A227]">
+                  Inquiry Summary Prepared
                 </p>
 
-                <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-[#242424]/85 dark:text-[#F8F5EF]/85 rounded-lg bg-[#F8F5EF] dark:bg-[#181715] p-3.5 border border-[#242424]/10 dark:border-[#F8F5EF]/10">
+                <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-[#000000]/85 rounded-lg bg-[#F9F6F0] p-3.5 border border-[#000000]/10">
                   {preparedInquiry}
                 </pre>
 
@@ -444,36 +406,25 @@ export function ContactSection({ config, onOpenConfig }: ContactSectionProps) {
                   {mailtoHref && (
                     <a
                       href={mailtoHref}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-[#242424] dark:bg-[#C5A46D] px-4 py-2 text-xs font-semibold text-[#F8F5EF] dark:text-[#181715]"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#000000] px-5 py-2.5 text-xs font-semibold text-[#D4AF37]"
                     >
                       <Mail className="h-3.5 w-3.5" />
                       <span>Open Email Client</span>
                     </a>
                   )}
-                  {whatsappHref && (
-                    <a
-                      href={whatsappHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-md border border-[#C5A46D] px-4 py-2 text-xs font-semibold text-[#A4834C] dark:text-[#C5A46D]"
-                    >
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      <span>Send via WhatsApp</span>
-                    </a>
-                  )}
                   <button
                     type="button"
                     onClick={handleCopyInquiry}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-[#242424]/20 dark:border-[#F8F5EF]/20 px-4 py-2 text-xs font-semibold text-[#242424] dark:text-[#F8F5EF]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[#000000]/20 hover:border-[#C9A227] px-5 py-2.5 text-xs font-semibold text-[#000000]"
                   >
                     {copiedInquiry ? (
                       <>
-                        <Check className="h-3.5 w-3.5 text-[#84917A]" />
+                        <Check className="h-3.5 w-3.5 text-[#C9A227]" />
                         <span>Copied Inquiry</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="h-3.5 w-3.5 text-[#C5A46D]" />
+                        <Copy className="h-3.5 w-3.5 text-[#C9A227]" />
                         <span>Copy Inquiry</span>
                       </>
                     )}

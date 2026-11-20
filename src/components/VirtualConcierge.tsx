@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ROOM_CATEGORIES, ResortConfig } from '../data/resortData';
+import { RESORT_LOCATION, ROOM_CATEGORIES, ResortProfile } from '../data/resortData';
 import { formatNaira } from '../utils/booking';
 
 interface VirtualConciergeProps {
-  config: ResortConfig;
+  profile: ResortProfile;
   onExploreRooms: () => void;
   onMakeReservation: () => void;
   onContactResort: () => void;
@@ -14,7 +14,7 @@ interface VirtualConciergeProps {
 type ConciergeView = 'greeting' | 'prices' | 'contact';
 
 export function VirtualConcierge({
-  config,
+  profile,
   onExploreRooms,
   onMakeReservation,
   onContactResort,
@@ -43,26 +43,28 @@ export function VirtualConcierge({
         {open && (
           <motion.div
             role="dialog"
-            aria-label="Home Sweet Home Resort Virtual Concierge"
+            aria-label="Home Sweet Home Resort Concierge"
             initial={{ opacity: 0, y: 12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.96 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-3 w-[calc(100vw-2rem)] max-w-sm rounded-2xl bg-[#FFFFFF] dark:bg-[#242424] border border-[#C5A46D]/35 shadow-2xl overflow-hidden"
+            className="mb-3 w-[calc(100vw-2rem)] max-w-sm rounded-2xl bg-[#FFFFFF] border border-[#C9A227]/45 shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 bg-[#242424] dark:bg-[#181715] px-5 py-4 text-[#F8F5EF]">
+            <div className="flex items-center justify-between gap-3 bg-[#000000] px-5 py-4 text-[#F9F6F0]">
               <div>
-                <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#C5A46D]">
-                  Resort Concierge
+                <p className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[#C9A227]">
+                  Guest Concierge
                 </p>
-                <p className="font-serif text-lg font-medium">Home Sweet Home Resort</p>
+                <p className="font-serif text-lg font-medium text-[#FFFFFF]">
+                  Home Sweet Home Resort
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close concierge"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#F8F5EF]/80 hover:text-[#F8F5EF] hover:bg-[#F8F5EF]/10 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#F9F6F0]/80 hover:text-[#D4AF37] transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -70,24 +72,22 @@ export function VirtualConcierge({
 
             {/* Body */}
             <div className="p-5 space-y-4">
-              <p className="text-sm leading-relaxed text-[#242424] dark:text-[#F8F5EF]">
-                Welcome to Home Sweet Home Resort. How may we make your stay exceptional?
+              <p className="text-sm leading-relaxed text-[#000000]">
+                Welcome to Home Sweet Home Resort. How may we assist with your stay?
               </p>
 
               {view === 'prices' && (
-                <div className="rounded-xl bg-[#F8F5EF] dark:bg-[#181715] border border-[#242424]/10 dark:border-[#F8F5EF]/10 p-4 space-y-2.5">
-                  <p className="text-xs font-semibold tracking-wider uppercase text-[#A4834C] dark:text-[#C5A46D]">
-                    Confirmed Nightly Rates
+                <div className="rounded-xl bg-[#F9F6F0] border border-[#C9A227]/30 p-4 space-y-2.5">
+                  <p className="text-xs font-semibold tracking-wider uppercase text-[#C9A227]">
+                    Official Nightly Suite Rates
                   </p>
                   {ROOM_CATEGORIES.map((room) => (
                     <div
                       key={room.id}
                       className="flex items-center justify-between gap-3 text-xs sm:text-sm"
                     >
-                      <span className="text-[#242424] dark:text-[#F8F5EF] font-medium">
-                        {room.name}
-                      </span>
-                      <span className="text-[#A4834C] dark:text-[#C5A46D] font-semibold tabular-nums">
+                      <span className="text-[#000000] font-medium">{room.name}</span>
+                      <span className="text-[#C9A227] font-semibold tabular-nums">
                         {formatNaira(room.nightlyRate)}
                       </span>
                     </div>
@@ -96,30 +96,25 @@ export function VirtualConcierge({
               )}
 
               {view === 'contact' && (
-                <div className="rounded-xl bg-[#F8F5EF] dark:bg-[#181715] border border-[#242424]/10 dark:border-[#F8F5EF]/10 p-4 space-y-1.5 text-xs text-[#242424]/85 dark:text-[#F8F5EF]/85">
-                  <p className="font-semibold tracking-wider uppercase text-[#A4834C] dark:text-[#C5A46D] mb-1">
-                    Configured Resort Contact
+                <div className="rounded-xl bg-[#F9F6F0] border border-[#C9A227]/30 p-4 space-y-1.5 text-xs text-[#000000]/85">
+                  <p className="font-semibold tracking-wider uppercase text-[#C9A227] mb-1">
+                    Location &amp; Hospitality Desk
                   </p>
                   <p>
-                    WhatsApp Desk:{' '}
-                    <span className="font-medium tabular-nums">
-                      {config.whatsappNumber || 'Not yet configured'}
-                    </span>
+                    Address: <span className="font-medium">{profile.resortAddress}</span>
                   </p>
-                  {config.contactPhone && (
+                  <p className="text-[11px] font-medium text-[#000000]/70">
+                    {RESORT_LOCATION.lga}
+                  </p>
+                  {profile.contactPhone && (
                     <p>
                       Telephone:{' '}
-                      <span className="font-medium tabular-nums">{config.contactPhone}</span>
+                      <span className="font-medium tabular-nums">{profile.contactPhone}</span>
                     </p>
                   )}
-                  {config.contactEmail && (
+                  {profile.contactEmail && (
                     <p>
-                      Email: <span className="font-medium">{config.contactEmail}</span>
-                    </p>
-                  )}
-                  {config.resortAddress && (
-                    <p>
-                      Address: <span className="font-medium">{config.resortAddress}</span>
+                      Email: <span className="font-medium">{profile.contactEmail}</span>
                     </p>
                   )}
                 </div>
@@ -130,30 +125,30 @@ export function VirtualConcierge({
                 <button
                   type="button"
                   onClick={() => handleAction('rooms')}
-                  className="rounded-md border border-[#242424]/15 dark:border-[#F8F5EF]/15 px-3 py-2.5 text-xs font-medium text-[#242424] dark:text-[#F8F5EF] hover:border-[#C5A46D] hover:bg-[#F8F5EF] dark:hover:bg-[#181715] transition-colors text-left"
+                  className="rounded-full border border-[#000000]/15 px-3.5 py-2 text-xs font-medium text-[#000000] hover:border-[#C9A227] hover:bg-[#F9F6F0] transition-colors text-center"
                 >
                   Explore Rooms
                 </button>
                 <button
                   type="button"
                   onClick={() => handleAction('prices')}
-                  className="rounded-md border border-[#242424]/15 dark:border-[#F8F5EF]/15 px-3 py-2.5 text-xs font-medium text-[#242424] dark:text-[#F8F5EF] hover:border-[#C5A46D] hover:bg-[#F8F5EF] dark:hover:bg-[#181715] transition-colors text-left"
+                  className="rounded-full border border-[#000000]/15 px-3.5 py-2 text-xs font-medium text-[#000000] hover:border-[#C9A227] hover:bg-[#F9F6F0] transition-colors text-center"
                 >
-                  View Prices
+                  View Rates
                 </button>
                 <button
                   type="button"
                   onClick={() => handleAction('reserve')}
-                  className="rounded-md bg-[#C5A46D] px-3 py-2.5 text-xs font-semibold text-[#181715] hover:bg-[#d4b680] transition-colors text-left"
+                  className="rounded-full bg-[#C9A227] hover:bg-[#D4AF37] px-3.5 py-2 text-xs font-semibold text-[#000000] transition-colors text-center"
                 >
-                  Make a Reservation
+                  Book Now
                 </button>
                 <button
                   type="button"
                   onClick={() => handleAction('contact')}
-                  className="rounded-md border border-[#242424]/15 dark:border-[#F8F5EF]/15 px-3 py-2.5 text-xs font-medium text-[#242424] dark:text-[#F8F5EF] hover:border-[#C5A46D] hover:bg-[#F8F5EF] dark:hover:bg-[#181715] transition-colors text-left"
+                  className="rounded-full border border-[#000000]/15 px-3.5 py-2 text-xs font-medium text-[#000000] hover:border-[#C9A227] hover:bg-[#F9F6F0] transition-colors text-center"
                 >
-                  Contact the Resort
+                  Location &amp; Map
                 </button>
               </div>
             </div>
@@ -161,7 +156,7 @@ export function VirtualConcierge({
         )}
       </AnimatePresence>
 
-      {/* Compact Circular Concierge Icon Button */}
+      {/* Circular Black & Gold Concierge Button */}
       <button
         type="button"
         onClick={() => {
@@ -169,11 +164,11 @@ export function VirtualConcierge({
           setView('greeting');
         }}
         aria-expanded={open}
-        aria-label={open ? 'Close Virtual Concierge' : 'Open Virtual Concierge'}
-        title="Virtual Concierge"
-        className="inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#242424] dark:bg-[#C5A46D] text-[#C5A46D] dark:text-[#181715] shadow-lg border border-[#C5A46D]/45 hover:scale-105 active:scale-95 transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C5A46D]"
+        aria-label={open ? 'Close Guest Concierge' : 'Open Guest Concierge'}
+        title="Guest Concierge"
+        className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#000000] text-[#D4AF37] shadow-lg border border-[#C9A227] hover:scale-105 active:scale-95 transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C9A227]"
       >
-        {open ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />}
+        {open ? <X className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
       </button>
     </div>
   );

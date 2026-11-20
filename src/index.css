@@ -2,36 +2,32 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-serif: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  --font-editorial: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
 
-  --color-ivory: #F8F5EF;
-  --color-champagne: #E8D9BD;
-  --color-gold: #C5A46D;
-  --color-gold-deep: #A4834C;
-  --color-charcoal: #242424;
-  --color-charcoal-deep: #181715;
-  --color-sage: #84917A;
+  --color-obsidian: #000000;
+  --color-cream: #F9F6F0;
+  --color-gold: #C9A227;
+  --color-champagne: #D4AF37;
+  --color-white: #FFFFFF;
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
     font-family: var(--font-sans);
-    background-color: #F8F5EF;
-    color: #242424;
+    background-color: #F9F6F0;
+    color: #000000;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  html.dark {
-    background-color: #181715;
-    color: #F8F5EF;
   }
 
   body {
     margin: 0;
     overflow-x: hidden;
+    background-color: #F9F6F0;
+    color: #000000;
   }
 
   h1, h2, h3, h4 {
@@ -40,39 +36,52 @@
   }
 }
 
-@keyframes goldSweep {
+.font-editorial {
+  font-family: var(--font-editorial);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes kenBurnsSlow {
   0% {
-    transform: translateX(-35%) translateY(-10%) scale(0.95);
-    opacity: 0.25;
+    transform: scale(1) translate3d(0, 0, 0);
   }
   50% {
-    transform: translateX(15%) translateY(5%) scale(1.08);
-    opacity: 0.6;
+    transform: scale(1.08) translate3d(-0.8%, -0.6%, 0);
   }
   100% {
-    transform: translateX(45%) translateY(-5%) scale(0.98);
-    opacity: 0.25;
+    transform: scale(1) translate3d(0, 0, 0);
   }
 }
 
-@keyframes heroDrift {
+@keyframes marqueeInfinite {
   0% {
-    transform: scale(1.02) translate3d(0, 0, 0);
-  }
-  50% {
-    transform: scale(1.06) translate3d(-0.5%, -0.5%, 0);
+    transform: translate3d(0, 0, 0);
   }
   100% {
-    transform: scale(1.02) translate3d(0, 0, 0);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
-.animate-gold-sweep {
-  animation: goldSweep 6.5s ease-in-out infinite alternate;
+.animate-ken-burns {
+  animation: kenBurnsSlow 24s ease-in-out infinite;
+  will-change: transform;
 }
 
-.animate-hero-drift {
-  animation: heroDrift 22s ease-in-out infinite;
+.animate-marquee-infinite {
+  animation: marqueeInfinite 34s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-infinite:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -80,8 +89,8 @@
     scroll-behavior: auto;
   }
 
-  .animate-gold-sweep,
-  .animate-hero-drift {
+  .animate-ken-burns,
+  .animate-marquee-infinite {
     animation: none !important;
   }
 }
